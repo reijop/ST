@@ -160,7 +160,7 @@ def checkThings(evt) {
     if(enableThermostat == true && 
     thermostatMode == ('heat') &&
     thermostatOperatingState.matches('heat')){
-    	log.debug "THERMNot running due to thermostat mode/state ($enableThermostat:$thermostatMode/$thermostatOperatingState)"
+    	log.debug "THERM: Not running due to thermostat mode/state ($enableThermostat:$thermostatMode/$thermostatOperatingState)"
     	fanRequestRun = false;
         acRequestRun = false;
     }
