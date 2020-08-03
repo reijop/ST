@@ -67,7 +67,7 @@ def initialize() {
 
     subscribe(outTemp, "temperature", "checkThings");
     subscribe(inTemp, "temperature", "checkThings");
-    subscribe(inMotion, "motion", "setMotion");
+    subscribe(inMotion, "motionSensor", "setMotion");
     subscribe(thermostat, "thermostatMode", "checkThings");
     subscribe(thermostat, "thermostatOperatingState", "checkThings");
     subscribe(suspend, "switch", "checkThings");
@@ -160,7 +160,7 @@ def checkThings(evt) {
     if(enableThermostat == true && 
     thermostatMode == ('heat') &&
     thermostatOperatingState.matches('heat')){
-    	log.debug "THERM: Not running due to thermostat mode/state ($enableThermostat:$thermostatMode/$thermostatOperatingState)"
+    	log.debug "THERMNot running due to thermostat mode/state ($enableThermostat:$thermostatMode/$thermostatOperatingState)"
     	fanRequestRun = false;
         acRequestRun = false;
     }
