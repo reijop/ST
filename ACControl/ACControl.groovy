@@ -13,10 +13,10 @@ definition(
 
 
 preferences {
-    section("Thermostat") {
-      input "enableThermostat", "bool", title: "Dont run when heat is on"
-    	input "thermostat", "capability.thermostat", title: "Thermostat"
-    }   
+	section("Thermostat") {
+		input "enableThermostat", "bool", title: "Dont run when heat is on"
+    		input "thermostat", "capability.thermostat", title: "Thermostat"
+    	}
     
 	section("Outdoor") {
 		input "outTemp", "capability.temperatureMeasurement", title: "Outdoor Thermometer"
@@ -57,14 +57,14 @@ def updated() {
 
 def initialize() {
 	state.fanRunning = false 
-  state.acRunning = false;
+        state.acRunning = false;
 
     subscribe(outTemp, "temperature", "checkThings");
     subscribe(inTemp, "temperature", "checkThings");
     subscribe(inMotion, "motion", "checkThings");
     subscribe(thermostat, "thermostatMode", "checkThings");
     subscribe(thermostat, "thermostatOperatingState", "checkThings");
-	  subscribe(suspend, "switch", "checkThings");
+    subscribe(suspend, "switch", "checkThings");
     subscribe(overrideFan, "switch", "checkThings");
     subscribe(overrideAC, "switch", "checkThings");
 }
@@ -76,52 +76,46 @@ def checkThings(evt) {
     def thermostatMode = settings.thermostat.currentValue('thermostatMode')
     def thermostatOperatingState = settings.thermostat.currentValue('thermostatOperatingState')
     def suspendHelper = settings.suspend.currentValue('switch')
+    def overrideFan = settings.overrideFan.currentValue('switch')
+    def overrideAC = settings.overrideAC.currentValue('switch')
     
-    log.debug "disable:(suspendHeper) Inside: $insideTemp, Outside: $outsideTemp, Thermostat: $thermostatMode/$thermostatOperatingState"
+    log.debug "disable:($suspendHeper) override:(f:$overrideFan/ac:$overrideAC)
+    log.debug "Inside: $insideTemp, Outside: $outsideTemp, Thermostat: $thermostatMode/$thermostatOperatingState"
+    log.debug "Motion: $insideMotion"
     
     def fanRequestRun = false;
     def acRequestRun = false;
     
     /* Temp Control */
-    if(insideTemp < outsideTemp) {
-      log.debug "TEMP: Not running due to insideTemp < outdoorTemp ($insideTemp/$outsideTemp)"
-    	fanRequestRun = false;
-      acRequestRun = false;
-    }
+	if(outsideTemp <= insideTemp) {
+		if(insideTemp >= minFan) {
+			fanRequestRun = true;
+			acRequestRun = false;
+		}
+		else { /* Fan Low temp cutoff */
+			fanRequestRun = false;
+			acRequestRun = false;
+		}
+	}
+	else {
+		if((insideTemp >= minAC /* && insideMotion.map(eq('active')) */ ) ||
+		   (insideTemp >= minTemp)) {
+			fanRequestRun = false;
+			acRequestRun = true;
+		}
+		else { /* AC Low temp cutoff */
+			fanRequestRun = false;
+			acRequestRun = false;
+		}
+	}
 
-    if(insideTemp < settings.minFan) {
-      log.debug "TEMP: Not running due to insideTemp < minFan ($insideTemp/$minFan)"
-    	fanRequestRun = false;
-      acRequestRun = false;
-    } 
-
-    if(insideTemp >= settings.minFan &&
-       insideTemp < settings.minAC ) {
-      log.debug "TEMP: Request fan on due to minAC > insideTemp < minFan ($insideTemp/$minFan)"
-    	fanRequestRun = true;
-      acRequestRun = false;
-    } 
-
-    if(insideTemp >= settings.minFan &&
-       insideTemp >= settings.minAC ) {
-      log.debug "TEMP: Not running due to insideTemp < minAC ($insideTemp/$minAC)"
-    	fanRequestRun = false;
-      acRequestRun = true;
-    } 
-
-    if(insideTemp < settings.minTemp) {
-      log.debug "TEMP: Not running due to insideTemp < minTemp ($insideTemp/$minTemp)"
-    	fanRequestRun = false;
-      acRequestRun = true;
-    } 
-    
-    /* negative */
+    /* negatives */
     if(enableThermostat == true && 
     thermostatMode == ('heat') &&
     thermostatOperatingState.matches('heat')){
     	log.debug "Not running due to thermostat mode/state ($enableThermostat:$thermostatMode/$thermostatOperatingState)"
     	fanRequestRun = false;
-      acRequestRun = false;
+        acRequestRun = false;
     }
 
     /* manuel */
@@ -133,21 +127,21 @@ def checkThings(evt) {
     
     if(overrideAC == 'on') {
        log.debug "OVERRIDE: Request AC on"
-       fanShouldRun = true;
-       acShouldRun = false;
+       fanShouldRun = false;
+       acShouldRun = true;
     }
     
     if(overrideAC == 'on' &&
-       overrideFan == 'on') {
        log.debug "OVERRIDE: Request AC and fan on - turning on only fan"
+       overrideFan == 'on') {
        fanShouldRun = true;
-       acShouldRune = false;
+       acShouldRun = false;
     }
     
     if(suspendHelper == 'on') {
         log.debug "DISABLE: Not running due to disable switch: $suspendHelper"
     	fanShouldRun = false;
-      acShouldRun = false;
+        acShouldRun = false;
     }
     
     if(fanShouldRun && !state.fanRunning) {
@@ -166,7 +160,7 @@ def checkThings(evt) {
         state.accRunning = true;
     } else if(!acShouldRun && state.acRunning) {
         log.debug "request AC off"
-    	  acUnits.off();
+    	acUnits.off();
         state.acRunning = false;
     }
 
