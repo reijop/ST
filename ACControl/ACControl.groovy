@@ -76,14 +76,14 @@ def initialize() {
 }
 
 def expireMotion(evt) {
-	log.debug "motion timeout expire"
+	log.debug "motion timeout expire: "
 	state.occupied = false;
 }
  
 def setMotion(evt) {
-    def occupied = settings.inMotion?.currentValue('motion')
-	if (occupied == 'active') {
-        log.debug "motion timeout set"
+    def motionSensors = settings.inMotion?.currentValue('motion')
+	if (motionSensors.any { it == 'active'}) {
+        log.debug "motion timeout set to $inMotionDelay for: $motionSensors"
     	state.occupied = true;
     	runin(inMotionDelay, expireMotion)
     }
