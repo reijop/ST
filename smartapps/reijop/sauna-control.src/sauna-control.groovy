@@ -38,16 +38,16 @@ preferences {
 }
 
 def installed() {
-	log.debug "Installed with settings: ${settings}"
+    log.debug "Installed with settings: ${settings}"
 
-	initialize()
+    initialize()
 }
 
 def updated() {
-	log.debug "Updated with settings: ${settings}"
+    log.debug "Updated with settings: ${settings}"
 
-	unsubscribe()
-	initialize()
+    unsubscribe()
+    initialize()
 }
 
 def initialize() {
@@ -66,36 +66,31 @@ def priorTempCalc() {
 }
 
 def setState(evt) {
-    # SetMax
-    if (settings.inTemp.currentValue('temperature').any{ it > state.priorTemp }){
+    if (settings.inTemp.currentValue('temperature').any { it > state.priorTemp }){
         state.maxTemp = settings.inTemp.currentValue('temperature').max()
     }
-
     state.sauna = true
 }
 
-#     return [Red: 0, Green: 39, Blue: 70, Yellow: 25, Orange: 10, Purple: 75, Pink: 83]
+return [Red: 0, Green: 39, Blue: 70, Yellow: 25, Orange: 10, Purple: 75, Pink: 83]
 def setBulbColor(insideTemp) {
     saunaSatusBulbs*.on()
     switch(insideTemp) {
         case { it >= startSaunaTemp && it < readySaunaTemp}:
-            log.debug "Sauna is tepid" # Green
+            log.debug "Sauna is tepid" // Green
             saunaStatusBulbs*.setColor([switch: "on", hue: 39, saturation: 100, level: 100])
 
         case { it >= readySaunaTemp && it < hotSaunaTemp}:
-            log.debug "Sauna is warm" # Yellow
+            log.debug "Sauna is warm" // Yellow
             saunaStatusBulbs*.setColor([switch: "on", hue: 25, saturation: 100, level: 100])
 
         case { it >= hotSaunaTemp && it < 212}:
-            log.debug "Sauna is hot" # Red
+            log.debug "Sauna is hot" // Red
             saunaStatusBulbs*.setColor([switch: "on", hue: 0, saturation: 100, level: 100])
 
-        case >= 212:
+        case { it >= 212}:
             log.debug "Sauna is on fire"
             saunaStatusBulbs*.setColor([switch: "on", hue: 70, saturation: 100, level: 100])
-
-        case default : log.warn "Sauna is undefined - should never get here"
-
     }
 }
 
@@ -104,29 +99,16 @@ def checkThings(evt) {
 
     insideTemp = settings.inTemp.currentValue('temperature').sum() / settings.inTemp.currentValue('temperature').size()
 
-    # Short circut if there's nothing to do.
+    // Short circut if there's nothing to do.
     if (insideTemp < startSaunaTemp){
-        state.sauna = false
+        state.sauna = "off"
         log.debug "Sauna is cold"
         return
     }
 
-    def color = "White"
-    def hueColor = 100
-    def saturation = 100
-    Map hClr = [:]
-    hClr.hex = "#FFFFFF"
-
-
-    if (priorTempCalc == 0){
-        state.sauna = "stable"
-    }
-    else if (priorTempCalc > 0){
-        state.sauna = "warming"
-    }
-    else {
-        state.sauna = "cooling"
-    }
+    if (priorTempCalc == 0){ state.sauna = "stable" }
+    else if (priorTempCalc > 0){ state.sauna = "warming" }
+    else { state.sauna = "cooling" }
 
     setBulbColor(insideTemp)
     setState(evt)
