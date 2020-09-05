@@ -101,7 +101,7 @@ def checkThings(evt) {
 
     def insideTemp = (settings.inTemp.currentValue('temperature').sum() / settings.inTemp.currentValue('temperature').size())
     def priorTempCalc = (state.priorTemp.toInteger() - insideTemp.toInteger())
-    def priorTempDelta = abs(state.priorTemp - insideTemp)
+    def priorTempDelta = Math.abs(state.priorTemp - insideTemp)
     def sat = 100 // default Saturation
 
     log.debug "priorTempCalc: ${priorTempCalc}, insideTemp: ${insideTemp}"
