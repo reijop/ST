@@ -101,6 +101,7 @@ def checkThings(evt) {
 
     def insideTemp = (settings.inTemp.currentValue('temperature').sum() / settings.inTemp.currentValue('temperature').size())
     def priorTempCalc = (state.priorTemp.toInteger() - insideTemp.toInteger())
+    def priorTempDelta = abs(state.priorTemp - insideTemp)
     def sat = 100 // default Saturation
 
     log.debug "priorTempCalc: ${priorTempCalc}, insideTemp: ${insideTemp}"
@@ -142,8 +143,8 @@ def checkThings(evt) {
 
     // bulbs are half-saturated if sauna is stable , full saturated if heating, barely saturated if cooling.
     if (priorTempCalc > 1){
-       	state.sauna = "cooling"
-        log.info "Sauna temp cooling"
+        state.sauna = "cooling"
+        log.info "Sauna temp cooling \u0394:${priorTempDelta}""
         sat = 30
     } else if (priorTempCalc < -1){
           state.sauna = "warming"
